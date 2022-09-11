@@ -164,12 +164,14 @@ Note the types of the above are `Int -> Int`.  That is, `plus10` and
 -}
 
 -- >>> plus10 3
+-- 13
 
 {-
 
 -}
 
 -- >>> plusn 10 3
+-- 13
 
 {-
 Partial Application
@@ -254,8 +256,8 @@ arguments before substituting them into the body of a defined function.
 
     doTwicePlus20 0 == doTwice (plus 20) 0        {- unfold doTwice -}
                     == (plus 20) ((plus 20) 0)
-                    ... undefined (fill this part in) ...
-                    == 20 + 20 + 0
+                    == (plus 20) (20 + 0)         {- unfold second plus -}
+                    == 20 + 20 + 0                {- unfold first plus -}
                     == 40
 
 Note that with partial application, that the order of arguments to the function
@@ -286,7 +288,7 @@ oneIntArg :: Int -> Bool
 oneIntArg = flip twoArg "a"
 
 {-
-Another solution relies on anonymous functions. (See if you can figure it
+Another solution relies on  functions. (See if you can figure it
 out after reading the section below.)
 
 Anonymous Functions
@@ -417,7 +419,7 @@ following test passes.
 -}
 
 singleton :: a -> [a]
-singleton = undefined
+singleton = (: [])
 
 singletonTest :: Test
 singletonTest = singleton True ~?= [True]
@@ -647,7 +649,7 @@ toUpperString' :: String -> String
 toUpperString' xs = map toUpper xs
 
 shiftPoly' :: XY -> Polygon -> Polygon
-shiftPoly' d = undefined
+shiftPoly' d lst = map (shiftXY d) lst
 
 {-
 Much better.  But let's make sure our refactoring didn't break anything!
@@ -693,7 +695,7 @@ We can write this more cleanly with map, of course:
 -}
 
 listIncr' :: [Int] -> [Int]
-listIncr' = undefined
+listIncr' xs = map (+ 1) xs
 
 {-
 Computation Pattern: Folding
@@ -771,7 +773,7 @@ from our list-length function?
 -}
 
 len' :: [a] -> Int
-len' = undefined
+len' xs = foldr (\_ n -> n + 1) 0 xs
 
 {-
 Once you have defined `len` in this way, see if you can trace how it
@@ -788,10 +790,10 @@ Or, how would you use foldr to eliminate the recursion from this?
 
 factorial :: Int -> Int
 factorial 0 = 1
-factorial n = n * factorial (n -1)
+factorial n = n * factorial (n - 1)
 
 factorial' :: Int -> Int
-factorial' n = undefined
+factorial' n = foldr (*) 1 [1 .. n]
 
 {-
 OK, one more.  The standard list library function `filter` has this
@@ -816,7 +818,10 @@ testFilter =
 Can we implement filter using foldr?  Sure!
 -}
 
-filter pred = undefined
+-- pred :: (a -> Bool)
+-- xs :: [a]
+
+filter pred xs = foldr (\x xs -> if pred x then x : xs else xs) [] xs
 
 runTests :: IO Counts
 runTests = runTestTT $ TestList [testMap, testFoldr, testFilter]
@@ -852,5 +857,43 @@ We'll see some other similar patterns later on.
 [2]: http://haskell.org/hoogle "Hoogle Query: Char -> Char"
 [3]: http://hackage.haskell.org/packages/archive/base/latest/doc/html/Data-Char.html "Data.Char"
 [4]: http://en.wikipedia.org/wiki/MapReduce "MapReduce"
+
+-}
+
+-- QUIZ QUESTIONS
+{-
+
+* Suppose we have the following function definitions
+
+> doTwice f x = f (f x)
+> plus x y = x + y
+Complete the evaluation below by substituting equals for equals.
+Note: your version can unfold definitions in any order, and may require a different number of steps.
+
+doTwice (plus 20) 0
+  == (plus 20) ((plus 20) 0)
+  -- Unfolding definition of the 2nd call to plus
+  == (plus 20) (20 + 0)
+  -- Performing integer arithmetic
+  == (plus 20) 20
+  -- Unfolding definition of plus
+  == 20 + 20
+  == 40
+
+-}
+
+{-
+Question 4:
+
+h :: (Bool -> Bool) -> [Bool]
+-- x must be a function that takes in a Bool
+
+h x = [x True, x False]
+
+f :: Bool -> Bool
+f arg = not arg
+
+-- >>> h f
+-- [False,True]
 
 -}
